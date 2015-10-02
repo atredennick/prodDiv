@@ -1,4 +1,4 @@
-f##  Script to reproduce findings from Fraser et al. 2015, Science
+##  Script to reproduce findings from Fraser et al. 2015, Science
 ##
 ##  Mainly reproduces Fig. 2A and relevant information for Table 1
 ##
