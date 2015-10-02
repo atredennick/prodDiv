@@ -10,6 +10,8 @@ This work would not have been possible had Fraser et al. not archived their code
 
 You can install these using: `install.packages(c("rdryad", "lme4"))`
 
+We also use @jslefche's function for estimating R^2 values for GLMMs: https://github.com/jslefche/rsquared.glmm
+
 ## Example
 The first step is to download this repo (look to the right). To reproduce our anaylsis, you can open the file "fraser_glmm_analysis.R" and run it. The Fraser et al. dataset is automatically downloaded from Dryad and cleaned-up using Fraser et al.'s original R script. You can also navigate to the folder where you saved this repo in the command line and run `Rscript fraser_glmm_analysis.R`. 
 
