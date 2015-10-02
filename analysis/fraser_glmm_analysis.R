@@ -1,4 +1,4 @@
-##  Script to reproduce findings from Fraser et al. 2015, Science
+f##  Script to reproduce findings from Fraser et al. 2015, Science
 ##
 ##  Mainly reproduces Fig. 2A and relevant information for Table 1
 ##
@@ -75,11 +75,11 @@ rmse.linear <- sqrt(mean((good.data$sr - pred.linear)^2))
 
 write.csv(data.frame(model=c("quadratic", "linear"),
                      rmse=c(rmse.quad, rmse.linear)),
-          "./results/global_rmses.csv")
+          "../results/global_rmses.csv")
 
 ### Compare models
 global_model_anova <- anova(global.quadratic.pois, global.linear.pois, test = "chi")
-capture.output(global_model_anova,file="./results/global_model_comparison_ANOVA.txt")
+capture.output(global_model_anova,file="../results/global_model_comparison_ANOVA.txt")
 
 
 ####
@@ -227,7 +227,7 @@ site.final.log10.glmm.results$form <- ordered(site.final.log10.glmm.results$form
 ####
 ####  Write results to CSV -----------------------------------------------------
 ####
-write.csv(site.final.log10.glmm.results,"./results/site_scale_results.csv");
+write.csv(site.final.log10.glmm.results,"../results/site_scale_results.csv");
 # table(site.final.log10.glmm.results)
 
 
@@ -301,7 +301,7 @@ scatterhist.lines.log10  =  function(x, y, xlab = "", ylab = ""){
 
 
 # plot the figure
-png("./results/fig2A_ATT.png", width = 9, height=8, units = "in", res = 100)
+png("../results/fig2A_ATT.png", width = 9, height=8, units = "in", res = 100)
 par(par.default)
 scatterhist.lines.log10(good.data$tot.bio+1,good.data$sr);
 par(par.default)
