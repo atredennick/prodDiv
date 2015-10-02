@@ -8,6 +8,9 @@ These scripts reproduce the main results from Fraser et al. 2015 ["Worldwide evi
 
 You can install these using: `install.packages(c("rdryad", "lme4"))`
 
+## Example
+The first step is to download this repo (look to the right). To reproduce our anaylsis, you can open the file "fraser_glmm_analysis.R" and run it. The Fraser et al. dataset is automatically downloaded from Dryad and cleaned-up using Fraser et al.'s original R script. You can also navigate to the folder where you saved this repo in the command line and run `Rscript fraser_glmm_analysis.R`. 
+
 ## License
 The MIT License (MIT)
 
