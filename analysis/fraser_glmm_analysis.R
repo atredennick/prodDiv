@@ -16,6 +16,9 @@ rm(list=ls())
 ####
 library(lme4)
 library(rdryad) #for reading in Fraser data from Dryad
+source("rsquaredglmm.R") #fxn for Rsqaures (https://github.com/jslefche/rsquared.glmm)
+
+
 
 ####
 ####  Source the data read-in/clean script -------------------------------------
@@ -73,9 +76,15 @@ if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
 pred.linear <- predict(global.linear.pois, type = "response",re.form=NA)
 rmse.linear <- sqrt(mean((good.data$sr - pred.linear)^2))
 
+# Get Rsquares
+r2.lin <- rsquared.glmm(global.linear.pois)
+r2.quad <- rsquared.glmm(global.quadratic.pois)
+
 write.csv(data.frame(model=c("quadratic", "linear"),
-                     rmse=c(rmse.quad, rmse.linear)),
-          "../results/global_rmses.csv")
+                     rmse=c(rmse.quad, rmse.linear),
+                     r2_marg=c(r2.quad$Marginal, r2.lin$Marginal),
+                     r2_cond=c(r2.quad$Conditional, r2.lin$Conditional)),
+          "../results/global_rmses_varexpl.csv")
 
 ### Compare models
 global_model_anova <- anova(global.quadratic.pois, global.linear.pois, test = "chi")
