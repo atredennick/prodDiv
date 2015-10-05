@@ -45,11 +45,12 @@ good.data$logbiomass <- log(good.data$live.biomass)
 
 
 ### Make explicit nesting covariate for random effects efficiency
-# good.data <- within(good.data, site.block <- (site:block)[drop = TRUE])
+good.data$siteblock <-paste(good.data$site,good.data$block,sep="")
 
 ##  Global quadratic fit
 # Write model formula
-mod.formula <- as.formula(richness~logbiomass+I(logbiomass^2)+(1|block/site))
+mod.formula <- as.formula(richness~logbiomass+I(logbiomass^2)+(1|site/siteblock))
+# mod.formula <- as.formula(richness~logbiomass+I(logbiomass^2)+(1|site) +(1|siteblock)) # same result
 # Fit the model
 global.quadratic.pois <- glmer(mod.formula, data=good.data, family="poisson",
                       control=glmerControl(optCtrl=list(maxfun=2e4)))
