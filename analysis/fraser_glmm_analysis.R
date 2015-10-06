@@ -55,7 +55,7 @@ global.quadratic.pois <- glmer(mod.formula, data=good.data, family="poisson",
                       control=glmerControl(optCtrl=list(maxfun=2e4), 
                                            optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.quadratic.pois@optinfo$derivs, solve(Hessian, gradient))
-if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
+if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
 
 # Get summary
 summary(global.quadratic.pois)
@@ -72,7 +72,7 @@ global.linear.pois <- glmer(mod.formula, data=good.data, family="poisson",
                                control=glmerControl(optCtrl=list(maxfun=2e4), 
                                                     optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.linear.pois@optinfo$derivs, solve(Hessian, gradient))
-if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
+if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
 
 # Make predictions for RMSE
 pred.linear <- predict(global.linear.pois, type = "response",re.form=NA)
@@ -146,10 +146,12 @@ for (i in 1:length(pi.names)){
   ###
   if(pi.names[i] != "Wilson"){
   tmp.glmm <- glmer(sr ~ log10.tot.bio + I(log10.tot.bio^2) + (1|grid),
-                    family = "poisson", data = tmp.data)
+                    family = "poisson", data = tmp.data,
+                    control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                         optimizer = "bobyqa"))
   ## Test to see if warnings matter (https://github.com/lme4/lme4/issues/120)
   relgrad <- with(tmp.glmm@optinfo$derivs, solve(Hessian, gradient))
-  if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
+  if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
   }
   
   if(pi.names[i] == "Wilson"){
