@@ -38,9 +38,13 @@ good.data$logbiomass <- log(good.data$live.biomass)
 ### I ran this with all difference combos of optimizers like
 ### Ben Bolker suggests here: http://stackoverflow.com/a/21370041
 ### I got the same results each time (estimates and significance tests)
-### and these results correspond with that of Fraser et al., so I
-### think it is fine and has to do with sensitive convergence tests in
+### So I think it is fine and has to do with sensitive convergence tests in
 ### LME4 (see here: https://github.com/lme4/lme4/issues/120)
+
+### Warnings (using lme4_1.1-9 and R 3.1.3) have been avoided by using
+### two different optimizers: one for the random effects (Nelder Mead) and
+### one for the combined fixed and random effects model (bobyqa). See lme4
+### documentation for details.
 
 
 
@@ -49,11 +53,11 @@ good.data$siteblock <-paste(good.data$site,good.data$block,sep="")
 
 ##  Global quadratic fit
 # Write model formula
-mod.formula <- as.formula(richness~logbiomass+I(logbiomass^2)+(1|site/siteblock))
-# mod.formula <- as.formula(richness~logbiomass+I(logbiomass^2)+(1|site) +(1|siteblock)) # same result
+mod.formula <- as.formula(richness~logbiomass+I(logbiomass^2)+(1|site) +(1|siteblock))
 # Fit the model
 global.quadratic.pois <- glmer(mod.formula, data=good.data, family="poisson",
-                      control=glmerControl(optCtrl=list(maxfun=2e4)))
+                      control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                           optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.quadratic.pois@optinfo$derivs, solve(Hessian, gradient))
 if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
 
@@ -69,7 +73,8 @@ rmse.quad <- sqrt(mean((good.data$richness - pred.quad)^2))
 mod.formula <- as.formula(richness~logbiomass+(1|block/site))
 # Fit the model
 global.linear.pois <- glmer(mod.formula, data=good.data, family="poisson",
-                               control=glmerControl(optCtrl=list(maxfun=2e4)))
+                               control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                                    optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.linear.pois@optinfo$derivs, solve(Hessian, gradient))
 if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
 

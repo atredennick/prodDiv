@@ -52,7 +52,8 @@ good.data <- within(good.data, site.grid <- (pi:grid)[drop = TRUE])
 mod.formula <- as.formula(sr~log10.tot.bio+I(log10.tot.bio^2)+(1|pi)+(1|site.grid))
 # Fit the model
 global.quadratic.pois <- glmer(mod.formula, data=good.data, family="poisson",
-                      control=glmerControl(optCtrl=list(maxfun=2e4)))
+                      control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                           optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.quadratic.pois@optinfo$derivs, solve(Hessian, gradient))
 if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
 
@@ -68,7 +69,8 @@ rmse.quad <- sqrt(mean((good.data$sr - pred.quad)^2))
 mod.formula <- as.formula(sr~log10.tot.bio+(1|pi)+(1|site.grid))
 # Fit the model
 global.linear.pois <- glmer(mod.formula, data=good.data, family="poisson",
-                               control=glmerControl(optCtrl=list(maxfun=2e4)))
+                               control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                                    optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.linear.pois@optinfo$derivs, solve(Hessian, gradient))
 if(max(abs(relgrad)) > 0.002) { stop("relative gradient too small") }
 
