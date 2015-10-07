@@ -2,8 +2,11 @@ Data: good.data
 Models:
 global.linear.pois: sr ~ log10.tot.bio + (1 | pi) + (1 | site.grid)
 global.quadratic.pois: sr ~ log10.tot.bio + I(log10.tot.bio^2) + (1 | pi) + (1 | site.grid)
-                      Df   AIC   BIC logLik deviance  Chisq Chi Df Pr(>Chisq)    
-global.linear.pois     4 46164 46192 -23078    46156                             
-global.quadratic.pois  5 46049 46085 -23019    46039 116.99      1  < 2.2e-16 ***
+                      Df   AIC   BIC logLik deviance  Chisq Chi Df Pr(>Chisq)
+global.linear.pois     4 46164 46192 -23078    46156                         
+global.quadratic.pois  5 46049 46085 -23019    46039 116.99      1  < 2.2e-16
+                         
+global.linear.pois       
+global.quadratic.pois ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

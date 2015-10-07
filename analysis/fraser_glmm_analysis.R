@@ -95,11 +95,11 @@ write.csv(data.frame(model=c("quadratic", "linear"),
                      rmse=c(rmse.quad, rmse.linear),
                      r2_marg=c(r2.quad$Marginal, r2.lin$Marginal),
                      r2_cond=c(r2.quad$Conditional, r2.lin$Conditional)),
-          "../results/global_rmses_varexpl.csv")
+          "../results/fraser_global_rmses_varexpl.csv")
 
 ### Compare models
 global_model_anova <- anova(global.quadratic.pois, global.linear.pois, test = "chi")
-capture.output(global_model_anova,file="../results/global_model_comparison_ANOVA.txt")
+capture.output(global_model_anova,file="../results/anovas/fraser_global_model_comparison_ANOVA.txt")
 
 
 
@@ -252,7 +252,7 @@ site.final.log10.glmm.results$form <- ordered(site.final.log10.glmm.results$form
 ####
 ####  Write results to CSV -----------------------------------------------------
 ####
-write.csv(site.final.log10.glmm.results,"../results/site_scale_results.csv");
+write.csv(site.final.log10.glmm.results,"../results/fraser_site_scale_results.csv");
 # table(site.final.log10.glmm.results)
 
 
