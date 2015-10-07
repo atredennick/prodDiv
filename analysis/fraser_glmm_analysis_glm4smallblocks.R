@@ -12,12 +12,12 @@
 rm(list=ls())
 
 ####
-####  Load necessary libraries --------------------------------------------------
+####  Load necessary libraries -------------------------------------------------
 ####
 library(lme4)
 library(rdryad) #for reading in Fraser data from Dryad
 source("rsquaredglmm.R") #fxn for Rsqaures (https://github.com/jslefche/rsquared.glmm)
-
+library(plyr)
 
 
 ####
@@ -35,34 +35,25 @@ source("read_clean_Fraser_data.R")
 ### Using Poisson 
 
 ### Note that you MAY get convergence warnings (depending on LME4 version).
-### I ran this with all different combos of optimizers like
+### I ran this with all difference combos of optimizers like
 ### Ben Bolker suggests here: http://stackoverflow.com/a/21370041
 ### I got the same results each time (estimates and significance tests)
 ### and these results correspond with that of Fraser et al., so I
 ### think it is fine and has to do with sensitive convergence tests in
-### LME4 (see here: https://github.com/lme4/lme4/issues/120). I also
-### ran the site-level hierarchical Bayesian models using rstan to make
-### sure we get consistent results (see /prodDiv/results/*bayes and
-### /prodDiv/analysis/bayes/). We do get consistent results. Thus, given
-### the information at hand, feel safe to ignore the warning messages.
+### LME4 (see here: https://github.com/lme4/lme4/issues/120)
 
 
 
 ### Make explicit nesting covariate for random effects efficiency
 good.data <- within(good.data, site.grid <- (pi:grid)[drop = TRUE])
 
-
-
-####
-####  Fit global-extent GLMMs --------------------------------------------------
-####
 ##  Global quadratic fit
 # Write model formula
 mod.formula <- as.formula(sr~log10.tot.bio+I(log10.tot.bio^2)+(1|pi)+(1|site.grid))
 # Fit the model
 global.quadratic.pois <- glmer(mod.formula, data=good.data, family="poisson",
-                               control=glmerControl(optCtrl=list(maxfun=2e4), 
-                                                    optimizer = c("Nelder_Mead", "bobyqa")))
+                      control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                           optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.quadratic.pois@optinfo$derivs, solve(Hessian, gradient))
 if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
 
@@ -78,8 +69,8 @@ rmse.quad <- sqrt(mean((good.data$sr - pred.quad)^2))
 mod.formula <- as.formula(sr~log10.tot.bio+(1|pi)+(1|site.grid))
 # Fit the model
 global.linear.pois <- glmer(mod.formula, data=good.data, family="poisson",
-                            control=glmerControl(optCtrl=list(maxfun=2e4), 
-                                                 optimizer = c("Nelder_Mead", "bobyqa")))
+                               control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                                    optimizer = c("Nelder_Mead", "bobyqa")))
 relgrad <- with(global.linear.pois@optinfo$derivs, solve(Hessian, gradient))
 if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
 
@@ -102,11 +93,14 @@ global_model_anova <- anova(global.quadratic.pois, global.linear.pois, test = "c
 capture.output(global_model_anova,file="../results/global_model_comparison_ANOVA.txt")
 
 
-
 ####
 ####  Fit site-level (pi) GLMMS ------------------------------------------------
 ####
 p.value  =  0.1   ## this is the alpha level used by Adler et al. 2011
+
+### Get number of grids per pi (site)
+grids.per.site <- ddply(good.data, .(pi), summarise,
+                        num_grids <- length(unique(grid))) 
 
 # Get vector of investigator names (= sites)
 pi.names <- as.character(sort(unique(good.data$pi)))
@@ -154,19 +148,19 @@ for (i in 1:length(pi.names)){
   ###
   ### Run poisson generalized linear mixed effects model (GLMM)
   ###
-  if(pi.names[i] != "Wilson"){
-    tmp.glmm <- glmer(sr ~ log10.tot.bio + I(log10.tot.bio^2) + (1|grid),
-                      family = "poisson", data = tmp.data,
-                      control=glmerControl(optCtrl=list(maxfun=2e4), 
-                                           optimizer = "bobyqa"))
-    ## Test to see if warnings matter (https://github.com/lme4/lme4/issues/120)
-    relgrad <- with(tmp.glmm@optinfo$derivs, solve(Hessian, gradient))
-    if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
+  if(grids.per.site[i,"..1"] > 2){
+  tmp.glmm <- glmer(sr ~ log10.tot.bio + I(log10.tot.bio^2) + (1|grid),
+                    family = "poisson", data = tmp.data,
+                    control=glmerControl(optCtrl=list(maxfun=2e4), 
+                                         optimizer = "bobyqa"))
+  ## Test to see if warnings matter (https://github.com/lme4/lme4/issues/120)
+  relgrad <- with(tmp.glmm@optinfo$derivs, solve(Hessian, gradient))
+  if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
   }
   
-  if(pi.names[i] == "Wilson"){ # Wilson only has 2 blocks; model struggled
+  if(grids.per.site[i,"..1"] < 3){
     tmp.glmm <- glm(sr ~ log10.tot.bio + I(log10.tot.bio^2),
-                    family = "poisson", data = tmp.data)
+                      family = "poisson", data = tmp.data)
   }
   
   glmm.summ <- c(t(summary(tmp.glmm)$coef)[-3,2:3])
@@ -192,23 +186,44 @@ for (i in 1:length(pi.names)){
   ###
   ### Check significance of quadratic term; fit linear if not
   ###
-  tmp.lin.glmm <- glmer(sr~log10.tot.bio + (1|grid),
-                        family = "poisson", data = tmp.data)
+  if(grids.per.site[i,"..1"] > 2){
+    tmp.lin.glmm <- glmer(sr~log10.tot.bio + (1|grid),
+                             family = "poisson", data = tmp.data)
+    ## Test to see if warnings matter (https://github.com/lme4/lme4/issues/120)
+    relgrad <- with(tmp.glmm@optinfo$derivs, solve(Hessian, gradient))
+    if(max(abs(relgrad)) > 0.002) { stop("relative gradient too large") }
+  }
+  
+  if(grids.per.site[i,"..1"] < 3){
+    tmp.lin.glmm <- glm(sr~log10.tot.bio,
+                          family = "poisson", data = tmp.data)
+  }
   tmplin.summ <- t(summary(tmp.lin.glmm)$coef)[,2][-3]
   tmplin.int <- t(summary(tmp.lin.glmm)$coef)[1]
   mod.lin.columns <- c("term1.coef","term1.se","term1.pval")
   mod.quad.columns <- c("term2.coef","term2.se","term2.pval")
   
   # Reset summaries IF linear model is better fit
-  mod.anova <- anova(tmp.glmm,tmp.lin.glmm,test = "Chisq")
-  p.mod.anova <- mod.anova[2,grep("Pr",colnames(mod.anova))]
-  if(p.mod.anova > p.value) {
-    # re-assign linear terms
-    site.poisson.log10.glmm.results[tmprow,mod.lin.columns] <- tmplin.summ
-    site.poisson.log10.glmm.results[tmprow,"intercept"] <- tmplin.int
-    
-    # set quadratic terms to NA
-    site.poisson.log10.glmm.results[tmprow,mod.quad.columns] <- NA
+  if(grids.per.site[i,"..1"] > 2){
+    if(anova(tmp.glmm,tmp.lin.glmm,test = "Chisq")[2,"Pr(>Chisq)"] > p.value) {
+      # re-assign linear terms
+      site.poisson.log10.glmm.results[tmprow,mod.lin.columns] <- tmplin.summ
+      site.poisson.log10.glmm.results[tmprow,"intercept"] <- tmplin.int
+      
+      # set quadratic terms to NA
+      site.poisson.log10.glmm.results[tmprow,mod.quad.columns] <- NA
+    }
+  }
+  
+  if(grids.per.site[i,"..1"] < 3){
+    if(anova(tmp.glmm,tmp.lin.glmm,test = "Chisq")[2,"Pr(>Chi)"] > p.value) {
+      # re-assign linear terms
+      site.poisson.log10.glmm.results[tmprow,mod.lin.columns] <- tmplin.summ
+      site.poisson.log10.glmm.results[tmprow,"intercept"] <- tmplin.int
+      
+      # set quadratic terms to NA
+      site.poisson.log10.glmm.results[tmprow,mod.quad.columns] <- NA
+    }
   }
   
   
@@ -331,3 +346,4 @@ par(par.default)
 scatterhist.lines.log10(good.data$tot.bio+1,good.data$sr);
 par(par.default)
 dev.off()
+
