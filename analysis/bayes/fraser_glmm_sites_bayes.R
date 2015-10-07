@@ -133,8 +133,12 @@ ngrids <- length(unique(dat$newgrids))
 ####
 ####  Fit STAN models
 ####
-# model <- stan(model_code=model_string, data=datalist, chains=0)
-model <- stan_model(model_code=model_string)
+dat.now <- dat[dat$study==1, ]
+datalist <- list(N=nrow(dat.now), grids=dat.now$newgrids, 
+                 G=length(unique(dat.now$newgrids)),
+                 y=dat.now$y, x=dat.now$x)
+pars=c("b0", "b1", "b2")
+model <- stan(model_code=model_string, data=datalist, chains=0, pars=pars)
 
 out_fits <- data.frame(site_id=NA, b0=NA, b1=NA, b2=NA)
 for(i in 1:length(unique(dat$study))){
@@ -145,13 +149,14 @@ for(i in 1:length(unique(dat$study))){
                    G=length(unique(dat.now$newgrids)),
                    y=dat.now$y, x=dat.now$x)
   pars=c("b0", "b1", "b2")
-  fit <- optimizing(object=model, as_vector = FALSE,
-                    data=datalist, hessian = TRUE)
-  out_fits[i,pars] <- unlist(fit$par[pars])
+  fit <- stan(fit=model, data=datalist, chains=2, 
+              iter = 2000, warmup = 1000, pars=pars)
+  outfit <- summary(fit)$summary[,"mean"]
+  out_fits[i,pars] <- outfit[1:3]
   out_fits[i,"site_id"] <- i
 }
 out_fits$pi <- sort(unique(alldata.litter$pi))
-write.csv(out_fits, "../../results/stan_optim_quadratic_estimates.csv")
+write.csv(out_fits, "../../results/stan_bayes_quadratic_estimates.csv")
 
 ### Compare to LME4 results
 library(lme4)
