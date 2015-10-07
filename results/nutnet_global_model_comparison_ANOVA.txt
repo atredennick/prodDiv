@@ -1,0 +1,9 @@
+Data: good.data
+Models:
+global.linear.pois: richness ~ logbiomass + (1 | block/site)
+global.quadratic.pois: richness ~ logbiomass + I(logbiomass^2) + (1 | site) + (1 | siteblock)
+                      Df    AIC    BIC  logLik deviance Chisq Chi Df Pr(>Chisq)    
+global.linear.pois     4 7630.9 7652.1 -3811.4   7622.9                            
+global.quadratic.pois  5 7410.3 7436.8 -3700.1   7400.3 222.6      1  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
