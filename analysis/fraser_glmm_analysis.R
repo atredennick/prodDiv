@@ -16,7 +16,7 @@ rm(list=ls())
 ####
 library(lme4)
 library(rdryad) #for reading in Fraser data from Dryad
-source("rsquaredglmm.R") #fxn for Rsqaures (https://github.com/jslefche/rsquared.glmm)
+source("rsquaredglmm.R") #fxn for R2 estimates (https://github.com/jslefche/rsquared.glmm)
 
 
 
