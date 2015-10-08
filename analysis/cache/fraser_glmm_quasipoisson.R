@@ -16,14 +16,12 @@ rm(list=ls())
 ####
 library(lme4)
 library(rdryad) #for reading in Fraser data from Dryad
-source("rsquaredglmm.R") #fxn for R2 estimates (https://github.com/jslefche/rsquared.glmm)
-
 
 
 ####
 ####  Source the data read-in/clean script -------------------------------------
 ####
-source("read_clean_Fraser_data.R")
+source("../read_clean_Fraser_data.R")
 
 
 
@@ -50,6 +48,7 @@ source("read_clean_Fraser_data.R")
 
 ### Make explicit nesting covariate for random effects efficiency
 good.data <- within(good.data, site.grid <- (pi:grid)[drop = TRUE])
+
 
 
 ####
@@ -146,7 +145,7 @@ for (i in 1:length(pi.names)){
   ###
   ### Check significance of quadratic term; fit linear if not
   ###
-  tmp.lin.glmm <- glmer(sr~log10.tot.bio + (1|grid),
+  tmp.lin.glmm <- glmer(sr~log10.tot.bio + (1|grid) + (1|obs),
                         family = "poisson", data = tmp.data)
   tmplin.summ <- t(summary(tmp.lin.glmm)$coef)[,2][-3]
   tmplin.int <- t(summary(tmp.lin.glmm)$coef)[1]
@@ -206,7 +205,7 @@ site.final.log10.glmm.results$form <- ordered(site.final.log10.glmm.results$form
 ####
 ####  Write results to CSV -----------------------------------------------------
 ####
-write.csv(site.final.log10.glmm.results,"../results/fraser_site_scale_results.csv");
+write.csv(site.final.log10.glmm.results,"../../results/quasipoisson/fraser_site_results_quasipois.csv");
 # table(site.final.log10.glmm.results)
 
 
@@ -240,26 +239,27 @@ scatterhist.lines.log10  =  function(x, y, xlab = "", ylab = ""){
   # add GLM regression lines
   for (i in 1:nrow(sig.results)){
     tempdata <- good.data[good.data$pi == sig.results$investigator[i],]
+    tempdata$obs <- c(1:nrow(tempdata))
     tempdata <- tempdata[order(tempdata$log10.tot.bio),]
     
     # get regression terms:
     if(!is.na(sig.results[i,"term2.coef"])){
       lines(tempdata$tot.bio+1,
-            predict(glmer(sr~log10.tot.bio+I(log10.tot.bio^2)+(1|grid),tempdata,family = "poisson"),newdata = tempdata,type = "response", re.form=NA),
+            predict(glmer(sr~log10.tot.bio+I(log10.tot.bio^2)+(1|grid)+(1|obs),tempdata,family = "poisson"),newdata = tempdata,type = "response", re.form=NA),
             col = ifelse(sig.results[i,"form"] == "CD","red","purple"),lwd = 2.3)
     }
     else {
       lines(tempdata$tot.bio+1,
-            predict(glmer(sr~log10.tot.bio+(1|grid),tempdata,family = "poisson"),newdata = tempdata,type = "response",re.form=NA),
+            predict(glmer(sr~log10.tot.bio+(1|grid)+(1|obs),tempdata,family = "poisson"),newdata = tempdata,type = "response",re.form=NA),
             col = ifelse(sig.results[i,"form"] == "NEG","green","darkgrey"),lwd = 2.3)
     }
   }
   
   # add poisson global prediction
-  tempdata <- good.data
-  tempdata <- tempdata[order(tempdata$log10.tot.bio),]
-  global.pred <- predict(global.quadratic.pois, tempdata, type = "response",re.form=NA)
-  lines(tempdata$tot.bio, global.pred, col="black", lwd=3)
+#   tempdata <- good.data
+#   tempdata <- tempdata[order(tempdata$log10.tot.bio),]
+#   global.pred <- predict(global.quadratic.pois, tempdata, type = "response",re.form=NA)
+#   lines(tempdata$tot.bio, global.pred, col="black", lwd=3)
   
   par(mar = c(0,4.8,1,1))
   barplot(xhist$counts, axes = FALSE, ylim = c(0, top), space = 0)
@@ -280,7 +280,7 @@ scatterhist.lines.log10  =  function(x, y, xlab = "", ylab = ""){
 
 
 # plot the figure
-png("../results/fig2A_ATT.png", width = 9, height=8, units = "in", res = 100)
+png("../../results/quasipoisson/fig2A_quasipoiss.png", width = 9, height=8, units = "in", res = 100)
 par(par.default)
 scatterhist.lines.log10(good.data$tot.bio+1,good.data$sr);
 par(par.default)
